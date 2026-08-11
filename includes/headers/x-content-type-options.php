@@ -15,9 +15,12 @@ if (!defined('ABSPATH')) {
 add_action('send_headers', 'securelywp_add_x_content_type_options_header');
 
 function securelywp_add_x_content_type_options_header() {
+    if (headers_sent()) {
+        return;
+    }
+
     $options = get_option('securelywp_headers_options', []);
-    
     if (!empty($options['x_content_type_options_active']) && !empty($options['x_content_type_options'])) {
-        header('X-Content-Type-Options: nosniff');
+        header('X-Content-Type-Options: nosniff', true);
     }
 }

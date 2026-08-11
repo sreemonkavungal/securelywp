@@ -15,9 +15,19 @@ if (!defined('ABSPATH')) {
 add_action('send_headers', 'securelywp_add_permissions_policy_header');
 
 function securelywp_add_permissions_policy_header() {
-    $options = get_option('securelywp_headers_options', []);
-    
-    if (!empty($options['permissions_policy_active']) && !empty($options['permissions_policy'])) {
-        header('Permissions-Policy: ' . sanitize_text_field($options['permissions_policy']));
+    if (headers_sent()) {
+        return;
     }
+
+    $options = get_option('securelywp_headers_options', []);
+    if (empty($options['permissions_policy_active']) || empty($options['permissions_policy'])) {
+        return;
+    }
+
+    $policy = trim(sanitize_text_field($options['permissions_policy']));
+    if (empty($policy)) {
+        return;
+    }
+
+    header('Permissions-Policy: ' . $policy, true);
 }

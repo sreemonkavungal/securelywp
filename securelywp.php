@@ -40,6 +40,7 @@ require_once SECURELYWP_PATH . 'includes/headers/hsts.php';
 require_once SECURELYWP_PATH . 'includes/headers/x-frame-options.php';
 require_once SECURELYWP_PATH . 'includes/headers/referrer-policy.php';
 require_once SECURELYWP_PATH . 'includes/headers/x-content-type-options.php';
+require_once SECURELYWP_PATH . 'includes/headers/cross-origin-opener-policy.php';
 require_once SECURELYWP_PATH . 'includes/two-factor/email-codes.php';
 require_once SECURELYWP_PATH . 'includes/two-factor/totp.php';
 require_once SECURELYWP_PATH . 'includes/two-factor/backup-codes.php';
@@ -218,7 +219,7 @@ class SecurelyWP {
         ];
         $default_headers_options = [
             'csp_active'                       => true,
-            'csp'                              => 'upgrade-insecure-requests;',
+            'csp'                              => "default-src 'self'; base-uri 'self'; frame-ancestors 'self'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; form-action 'self'; upgrade-insecure-requests;",
             'csp_report_uri'                   => '',
             'hsts_active'                      => true,
             'hsts_max_age'                     => 31536000,
@@ -233,6 +234,8 @@ class SecurelyWP {
             'permissions_policy'               => 'accelerometer=(), autoplay=(), camera=(), cross-origin-isolated=(), display-capture=(self), encrypted-media=(), fullscreen=*, geolocation=(self), gyroscope=(), keyboard-map=(), magnetometer=(), microphone=(), midi=(), payment=*, picture-in-picture=*, publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=*, usb=(), xr-spatial-tracking=(), gamepad=(), serial=()',
             'x_content_type_options_active'    => true,
             'x_content_type_options'           => true,
+            'coop_active'                      => true,
+            'coop'                             => 'same-origin',
         ];
         $default_2fa_options = [
             'enforce_2fa_network' => false,

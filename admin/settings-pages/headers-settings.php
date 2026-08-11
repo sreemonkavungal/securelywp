@@ -24,7 +24,7 @@ function securelywp_headers_settings_page() {
 
     $options = get_option('securelywp_headers_options', [
         'csp_active' => true,
-        'csp' => 'upgrade-insecure-requests;',
+        'csp' => "default-src 'self'; base-uri 'self'; frame-ancestors 'self'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; form-action 'self'; upgrade-insecure-requests;",
         'csp_report_uri' => '',
         'hsts_active' => true,
         'hsts_max_age' => 31536000,
@@ -39,6 +39,8 @@ function securelywp_headers_settings_page() {
         'permissions_policy' => 'accelerometer=(), autoplay=(), camera=(), cross-origin-isolated=(), display-capture=(self), encrypted-media=(), fullscreen=*, geolocation=(self), gyroscope=(), keyboard-map=(), magnetometer=(), microphone=(), midi=(), payment=*, picture-in-picture=*, publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=*, usb=(), xr-spatial-tracking=(), gamepad=(), serial=()',
         'x_content_type_options_active' => true,
         'x_content_type_options' => true,
+        'coop_active' => true,
+        'coop' => 'same-origin',
     ]);
 
     $message = '';
@@ -67,6 +69,8 @@ function securelywp_headers_settings_page() {
                 'permissions_policy' => isset($_POST['permissions_policy']) ? sanitize_text_field($_POST['permissions_policy']) : 'accelerometer=(), autoplay=(), camera=(), cross-origin-isolated=(), display-capture=(self), encrypted-media=(), fullscreen=*, geolocation=(self), gyroscope=(), keyboard-map=(), magnetometer=(), microphone=(), midi=(), payment=*, picture-in-picture=*, publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=*, usb=(), xr-spatial-tracking=(), gamepad=(), serial=()',
                 'x_content_type_options_active' => isset($_POST['x_content_type_options_active']) && filter_var($_POST['x_content_type_options_active'], FILTER_VALIDATE_BOOLEAN),
                 'x_content_type_options' => isset($_POST['x_content_type_options']) && filter_var($_POST['x_content_type_options'], FILTER_VALIDATE_BOOLEAN),
+                'coop_active' => isset($_POST['coop_active']) && filter_var($_POST['coop_active'], FILTER_VALIDATE_BOOLEAN),
+                'coop' => isset($_POST['coop']) ? sanitize_text_field($_POST['coop']) : 'same-origin',
             ];
             if (update_option('securelywp_headers_options', $new_options)) {
                 $message = esc_html__('Settings updated successfully!', 'securelywp');
@@ -198,6 +202,20 @@ function securelywp_headers_settings_page() {
                         <?php esc_html_e('X-Content-Type-Options: nosniff', 'securelywp'); ?>
                     </label>
                     <small><?php esc_html_e('Prevents MIME-type sniffing to avoid security risks from misinterpreted content types.', 'securelywp'); ?></small>
+                </p>
+                <p>
+                    <label class="securelywp-toggle">
+                        <input type="checkbox" name="coop_active" <?php checked(!empty($options['coop_active'])); ?>>
+                        <span class="slider"></span>
+                        <?php esc_html_e('Cross-Origin-Opener-Policy', 'securelywp'); ?>
+                    </label>
+                    <small><?php esc_html_e('Reduces cross-window attacks by limiting how your site can be opened from other origins.', 'securelywp'); ?></small>
+                    <label><?php esc_html_e('COOP Value', 'securelywp'); ?></label>
+                    <select name="coop">
+                        <option value="same-origin" <?php selected($options['coop'] ?? 'same-origin', 'same-origin'); ?>>same-origin</option>
+                        <option value="same-origin-allow-popups" <?php selected($options['coop'] ?? 'same-origin', 'same-origin-allow-popups'); ?>>same-origin-allow-popups</option>
+                        <option value="unsafe-none" <?php selected($options['coop'] ?? 'same-origin', 'unsafe-none'); ?>>unsafe-none</option>
+                    </select>
                 </p>
                 <input type="submit" name="securelywp_save_headers_settings" class="button button-primary" value="<?php esc_attr_e('Save Settings', 'securelywp'); ?>">
             </form>
