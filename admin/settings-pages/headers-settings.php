@@ -219,6 +219,16 @@ function securelywp_headers_settings_page() {
                 </p>
                 <input type="submit" name="securelywp_save_headers_settings" class="button button-primary" value="<?php esc_attr_e('Save Settings', 'securelywp'); ?>">
             </form>
+            <?php $static_rules = securelywp_get_static_header_rules(); ?>
+            <div class="securelywp-card" style="margin-top:24px;">
+                <h2><?php esc_html_e('Static Header Rules', 'securelywp'); ?></h2>
+                <p><?php esc_html_e('Use these rules in your web server configuration to apply security headers outside of PHP.', 'securelywp'); ?></p>
+                <p><strong><?php esc_html_e('Apache / LiteSpeed', 'securelywp'); ?></strong></p>
+                <textarea readonly rows="6" class="large-text code"><?php echo esc_textarea($static_rules['apache']); ?></textarea>
+                <p><strong><?php esc_html_e('Nginx', 'securelywp'); ?></strong></p>
+                <textarea readonly rows="6" class="large-text code"><?php echo esc_textarea($static_rules['nginx']); ?></textarea>
+                <button type="button" class="button securelywp-copy-headers"><?php esc_html_e('Copy Rules', 'securelywp'); ?></button>
+            </div>
         </div>
     </div>
     <?php

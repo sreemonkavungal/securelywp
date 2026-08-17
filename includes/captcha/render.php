@@ -24,8 +24,6 @@ function securelywp_captcha_enqueue_script() {
         true
     );
 }
-add_action('wp_enqueue_scripts', 'securelywp_captcha_enqueue_script');
-add_action('login_enqueue_scripts', 'securelywp_captcha_enqueue_script');
 
 /**
  * Render CAPTCHA widget.

@@ -223,6 +223,57 @@ function securelywp_record_login_lockout($ip, $attempts) {
 }
 
 /**
+ * Generate static security header rules for Apache/LiteSpeed and Nginx.
+ *
+ * @return array<string,string>
+ */
+function securelywp_get_static_header_rules() {
+    $headers = get_option('securelywp_headers_options', []);
+
+    $x_frame_options = !empty($headers['x_frame_options_active']) ? strtoupper(sanitize_text_field($headers['x_frame_options'])) : 'SAMEORIGIN';
+    $x_content_type_options = !empty($headers['x_content_type_options_active']) ? 'nosniff' : '';
+    $referrer_policy = !empty($headers['referrer_policy_active']) ? sanitize_text_field($headers['referrer_policy']) : 'strict-origin-when-cross-origin';
+
+    $hsts = '';
+    if (!empty($headers['hsts_active']) && is_ssl()) {
+        $max_age = absint($headers['hsts_max_age']);
+        $max_age = $max_age < 31536000 ? 31536000 : $max_age;
+        $hsts = 'max-age=' . $max_age;
+        if (!empty($headers['hsts_include_subdomains'])) {
+            $hsts .= '; includeSubDomains';
+        }
+        if (!empty($headers['hsts_preload'])) {
+            $hsts .= '; preload';
+        }
+    }
+
+    $apache_headers = [];
+    $nginx_headers = [];
+
+    if ($x_frame_options) {
+        $apache_headers[] = sprintf('Header always set X-Frame-Options "%s"', esc_attr($x_frame_options));
+        $nginx_headers[] = sprintf('add_header X-Frame-Options "%s" always;', esc_attr($x_frame_options));
+    }
+    if ($x_content_type_options) {
+        $apache_headers[] = 'Header always set X-Content-Type-Options "nosniff"';
+        $nginx_headers[] = 'add_header X-Content-Type-Options "nosniff" always;';
+    }
+    if ($referrer_policy) {
+        $apache_headers[] = sprintf('Header always set Referrer-Policy "%s"', esc_attr($referrer_policy));
+        $nginx_headers[] = sprintf('add_header Referrer-Policy "%s" always;', esc_attr($referrer_policy));
+    }
+    if ($hsts) {
+        $apache_headers[] = sprintf('Header always set Strict-Transport-Security "%s"', esc_attr($hsts));
+        $nginx_headers[] = sprintf('add_header Strict-Transport-Security "%s" always;', esc_attr($hsts));
+    }
+
+    return [
+        'apache' => implode("\n", $apache_headers),
+        'nginx' => implode("\n", $nginx_headers),
+    ];
+}
+
+/**
  * Get recent login lockout events.
  *
  * @return array<int,array{ip:string,attempts:int,time:int}>

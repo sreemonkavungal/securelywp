@@ -33,6 +33,7 @@ require_once SECURELYWP_PATH . 'includes/hardening/detect-admin-username.php';
 require_once SECURELYWP_PATH . 'includes/hardening/disable-file-edit.php';
 require_once SECURELYWP_PATH . 'includes/hardening/force-https.php';
 require_once SECURELYWP_PATH . 'includes/hardening/brute-force-lite.php';
+require_once SECURELYWP_PATH . 'includes/rate-limiter.php';
 require_once SECURELYWP_PATH . 'includes/hardening/login-security.php';
 require_once SECURELYWP_PATH . 'includes/headers/permissions-policy.php';
 require_once SECURELYWP_PATH . 'includes/headers/csp.php';
@@ -146,7 +147,17 @@ class SecurelyWP {
     }
 
     public function enqueue_assets($hook) {
-        if ($hook !== 'profile.php' && strpos($hook, 'securelywp') === false) {
+        $load_securelywp_assets = false;
+
+        if (strpos($hook, 'securelywp') !== false) {
+            $load_securelywp_assets = true;
+        }
+
+        if ($hook === 'profile.php' && isset($_GET['page']) && $_GET['page'] === 'securelywp-two-factor-settings') {
+            $load_securelywp_assets = true;
+        }
+
+        if (!$load_securelywp_assets) {
             return;
         }
 
@@ -160,7 +171,7 @@ class SecurelyWP {
         wp_enqueue_script('jquery-ui-dialog');
         wp_enqueue_style('wp-jquery-ui-dialog');
 
-        if ($hook === 'profile.php' || strpos($hook, 'securelywp-two-factor-settings') !== false) {
+        if ($hook === 'profile.php' || strpos($hook, 'securelywp-two-factor-settings') !== false || strpos($hook, 'securelywp_page_securelywp-two-factor-settings') !== false) {
             wp_enqueue_script(
                 'securelywp-qrcode-js',
                 SECURELYWP_URL . 'assets/two-factor/js/qrcode.js',

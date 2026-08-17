@@ -35,10 +35,7 @@ class SecurelyWP_Login_Security {
         }
 
         $ip = securelywp_get_client_ip();
-        $transient_key = 'securelywp_login_attempts_' . md5($ip);
-        $attempts = (int) get_transient($transient_key);
-        $attempts++;
-        set_transient($transient_key, $attempts, MINUTE_IN_SECONDS * max(1, absint($options['lockout_duration'])));
+        SecurelyWP_Rate_Limiter::increment_attempts($ip);
     }
 
     /**
@@ -50,8 +47,7 @@ class SecurelyWP_Login_Security {
      */
     public function clear_attempts($user_login, $user) {
         $ip = securelywp_get_client_ip();
-        $transient_key = 'securelywp_login_attempts_' . md5($ip);
-        delete_transient($transient_key);
+        SecurelyWP_Rate_Limiter::clear_attempts($ip);
     }
 
     /**
@@ -69,10 +65,9 @@ class SecurelyWP_Login_Security {
         }
 
         $ip = securelywp_get_client_ip();
-        $transient_key = 'securelywp_login_attempts_' . md5($ip);
-        $attempts = (int) get_transient($transient_key);
+        $attempts = SecurelyWP_Rate_Limiter::get_attempts($ip);
 
-        if ($attempts >= absint($options['max_attempts'])) {
+        if ($attempts >= min(absint($options['max_attempts']), SecurelyWP_Rate_Limiter::MAX_ATTEMPTS)) {
             securelywp_record_login_lockout($ip, $attempts);
             return new WP_Error('securelywp_login_lockout', $options['lockout_message']);
         }
