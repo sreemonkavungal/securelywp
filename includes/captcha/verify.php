@@ -13,20 +13,35 @@ if (!defined('ABSPATH')) {
  * Grab CAPTCHA token from POST.
  */
 function securelywp_captcha_grab_token() {
-    return isset($_POST['cf-turnstile-response']) ? sanitize_text_field(wp_unslash($_POST['cf-turnstile-response'])) : apply_filters('securelywp_captcha_token_override', '');
+    $token = isset($_POST['cf-turnstile-response']) ? sanitize_text_field(wp_unslash($_POST['cf-turnstile-response'])) : '';
+
+    if ($token === '') {
+        $token = (string) apply_filters('securelywp_captcha_token_override', '');
+    }
+
+    return strlen($token) <= 2048 ? $token : '';
 }
 
 /**
  * Verify token with Cloudflare Turnstile.
  */
 function securelywp_captcha_verify_token($token) {
+    static $verified_tokens = [];
+
     if (!securelywp_captcha_is_configured() || empty($token)) {
         return !securelywp_captcha_is_configured();
     }
+
+    $token_hash = hash('sha256', $token);
+    if (array_key_exists($token_hash, $verified_tokens)) {
+        return $verified_tokens[$token_hash];
+    }
+
     $settings = securelywp_captcha_get_settings();
     $body = ['secret' => $settings['secret_key'], 'response' => $token];
-    if (!empty($_SERVER['REMOTE_ADDR'])) {
-        $body['remoteip'] = sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR']));
+    $client_ip = securelywp_get_client_ip();
+    if ($client_ip !== '0.0.0.0') {
+        $body['remoteip'] = $client_ip;
     }
     $resp = wp_remote_post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
         'method' => 'POST',
@@ -34,12 +49,15 @@ function securelywp_captcha_verify_token($token) {
         'headers' => ['Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8'],
         'body' => $body,
         'data_format' => 'body',
+        'sslverify' => true,
     ]);
     if (is_wp_error($resp) || wp_remote_retrieve_response_code($resp) !== 200) {
+        $verified_tokens[$token_hash] = false;
         return false;
     }
     $payload = json_decode(wp_remote_retrieve_body($resp), true);
-    return is_array($payload) && !empty($payload['success']);
+    $verified_tokens[$token_hash] = is_array($payload) && !empty($payload['success']);
+    return $verified_tokens[$token_hash];
 }
 
 /**
@@ -59,40 +77,6 @@ function securelywp_captcha_register_verifiers() {
     add_filter('preprocess_comment', 'securelywp_captcha_verify_comment', 30);
     if (function_exists('WC')) {
         add_action('woocommerce_after_checkout_validation', 'securelywp_captcha_verify_woocommerce_checkout', 30, 2);
-    }
-    if (defined('WPCF7_VERSION')) {
-        add_action('wpcf7_before_send_mail', 'securelywp_captcha_cf7_verify');
-    }
-    if (class_exists('GFAPI')) {
-        add_action('gform_pre_submission', 'securelywp_captcha_gf_verify');
-    }
-    if (class_exists('WPForms')) {
-        add_action('wpforms_process', 'securelywp_captcha_wpforms_verify', 10, 3);
-    }
-    if (class_exists('FrmFormsController')) {
-        add_action('frm_before_create_entry', 'securelywp_captcha_formidable_verify', 10, 2);
-    }
-    if (class_exists('Forminator_Form_Model')) {
-        add_action('forminator_custom_form_submit_response', 'securelywp_captcha_forminator_verify', 10, 2);
-    }
-    if (class_exists('Elementor\Plugin')) {
-        add_action('elementor_pro/forms/validation', 'securelywp_captcha_elementor_verify', 10, 2);
-    }
-    if (function_exists('edd_is_ajax')) {
-        add_action('edd_checkout_error_checks', 'securelywp_captcha_edd_verify', 10, 1);
-    }
-    if (class_exists('MC4WP')) {
-        add_filter('mc4wp_form_submit', 'securelywp_captcha_mailchimp_verify', 10, 2);
-    }
-    if (function_exists('bp_core_signup_user')) {
-        add_action('bp_core_signup_user', 'securelywp_captcha_buddypress_verify', 1, 1);
-    }
-    if (function_exists('bbp_is_single_forum')) {
-        add_action('bbp_new_reply', 'securelywp_captcha_bbpress_verify', 1, 2);
-        add_action('bbp_new_topic', 'securelywp_captcha_bbpress_verify', 1, 2);
-    }
-    if (is_multisite()) {
-        add_action('wpmu_validate_user_signup', 'securelywp_captcha_multisite_verify', 10, 1);
     }
 }
 
