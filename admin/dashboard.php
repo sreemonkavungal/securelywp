@@ -35,6 +35,7 @@ class SecurelyWP_Dashboard {
         $twofa_options = get_option('securelywp_2fa_options', []);
         $firewall_options = get_option('securelywp_firewall_options', ['enable_firewall' => true]);
         $login_security_options = securelywp_get_login_security_options();
+        $security_level = securelywp_get_security_level();
         $vuln_summary = securelywp_get_vulnerability_summary();
         $blocked_requests = get_option('securelywp_blocked_requests', []);
 
@@ -97,6 +98,9 @@ class SecurelyWP_Dashboard {
             'login_security_duration' => esc_html((string) $login_security_duration),
             'login_security_recent_lockouts' => esc_html((string) $login_security_recent_lockouts),
             'login_security_indicator' => $login_security_enabled ? 'enabled' : 'disabled',
+            'security_level' => esc_html($security_level['level']),
+            'security_score' => absint($security_level['score']),
+            'security_next_step' => esc_html($security_level['next_step']),
         ];
     }
 
@@ -110,6 +114,14 @@ class SecurelyWP_Dashboard {
         <div class="wrap securelywp-dashboard">
             <h1><?php esc_html_e('SecurelyWP Dashboard', 'securelywp'); ?></h1>
             <p class="securelywp-dashboard-intro"><?php esc_html_e('Monitor your site’s security posture, track protection status, and reach important controls from a modern, business-grade dashboard.', 'securelywp'); ?></p>
+            <div class="securelywp-security-level" aria-live="polite">
+                <div>
+                    <span class="summary-label"><?php esc_html_e('Security Level', 'securelywp'); ?></span>
+                    <strong class="security-level-name dynamic-data" data-field="security_level"><?php echo esc_html($data['security_level']); ?></strong>
+                    <span class="security-level-next dynamic-data" data-field="security_next_step"><?php echo esc_html($data['security_next_step']); ?></span>
+                </div>
+                <div class="security-level-score"><strong class="dynamic-data" data-field="security_score"><?php echo absint($data['security_score']); ?></strong><span>%</span></div>
+            </div>
             <div class="securelywp-summary-shell">
                 <button type="button" class="securelywp-summary-nav securelywp-summary-nav-prev" aria-label="Scroll left">&#10094;</button>
                 <div class="securelywp-summary-grid" id="securelywp-summary-grid" tabindex="0">
@@ -313,6 +325,9 @@ class SecurelyWP_Dashboard {
                             }
 
                             var data = response.data;
+                            $('[data-field="security_level"]').text(data.security_level);
+                            $('[data-field="security_score"]').text(data.security_score);
+                            $('[data-field="security_next_step"]').text(data.security_next_step);
                             $('[data-field="vuln_status"]').text(data.vuln_status);
                             $('[data-field="vuln_count"]').text(data.vuln_count);
                             $('[data-field="vuln_progress"]').text(data.vuln_progress);

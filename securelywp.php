@@ -2,7 +2,7 @@
 /**
  * Plugin Name: SecurelyWP – all-in-one security
  * Description: WordPress security with vulnerability scanning, hardening, headers, CAPTCHA, firewall, and two-factor authentication.
- * Version: 1.2.1
+ * Version: 1.3.0
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: <a href="https://github.com/sreemonkavungal">SREEMON K S</a> | <a href="https://securelywp.com">SecurelyWP</a>
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SECURELYWP_VERSION', '1.2.1');
+define('SECURELYWP_VERSION', '1.3.0');
 define('SECURELYWP_PATH', plugin_dir_path(__FILE__));
 define('SECURELYWP_URL', plugin_dir_url(__FILE__));
 

@@ -4,7 +4,7 @@ Donate link:
 Tags: security, headers, vulnerability scanner, captcha, two-factor authentication (2fa)
 Requires at least: 6.0
 Tested up to: 6.8.2
-Stable tag: 1.2.2
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -178,6 +178,11 @@ Go to "Profile" > "Two-Factor Authentication," enable your preferred methods, an
 7. Login Security: Configure lockout thresholds and monitor recent lockout activity.  
 
 == Changelog ==
+
+= 1.3.0 =
+* Added a centralized security-level score with Basic, Protected, Strong, and Hardened states.
+* Added security-level visibility to the main dashboard and vulnerability assessment page.
+* Added a migration routine that preserves existing settings during the 1.3.0 upgrade.
 
 = 1.2.2 =
 * Added Login Security settings page with configurable failed-login lockout protection.

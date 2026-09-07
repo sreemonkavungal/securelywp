@@ -197,6 +197,66 @@ function securelywp_get_login_security_options() {
 }
 
 /**
+ * Calculate the site's current security level from enabled controls.
+ *
+ * @return array{level:string,score:int,max_score:int,enabled:int,total:int,next_step:string}
+ */
+function securelywp_get_security_level() {
+    $hardening = get_option('securelywp_hardening_options', []);
+    $headers = get_option('securelywp_headers_options', []);
+    $firewall = get_option('securelywp_firewall_options', []);
+    $captcha = securelywp_captcha_get_settings();
+    $login_security = securelywp_get_login_security_options();
+    $checks = [
+        !empty($hardening['hide_wp_version']),
+        !empty($hardening['disable_php_uploads']),
+        !empty($hardening['prevent_user_enum']),
+        !empty($hardening['disable_file_edit']),
+        !empty($hardening['force_https']),
+        !empty($hardening['disable_xmlrpc']),
+        !empty($hardening['restrict_rest_api']),
+        !empty($headers['csp_active']),
+        !empty($headers['hsts_active']) && is_ssl(),
+        !empty($headers['x_frame_options_active']),
+        !empty($headers['referrer_policy_active']),
+        !empty($headers['permissions_policy_active']),
+        !empty($headers['x_content_type_options_active']),
+        !empty($firewall['enable_firewall']),
+        !empty($login_security['enabled']),
+        securelywp_captcha_is_configured() && count(array_filter($captcha, 'is_bool')) > 0,
+        securelywp_count_users_with_2fa() > 0,
+        !defined('WP_DEBUG') || !WP_DEBUG,
+        is_ssl(),
+    ];
+    $total = count($checks);
+    $enabled = count(array_filter($checks));
+    $score = $total > 0 ? (int) round(($enabled / $total) * 100) : 0;
+
+    if ($score >= 90) {
+        $level = __('Hardened', 'securelywp');
+        $next_step = __('Keep monitoring scans and apply updates promptly.', 'securelywp');
+    } elseif ($score >= 75) {
+        $level = __('Strong', 'securelywp');
+        $next_step = __('Enable the remaining disabled controls for hardened protection.', 'securelywp');
+    } elseif ($score >= 50) {
+        $level = __('Protected', 'securelywp');
+        $next_step = __('Review disabled hardening and header controls.', 'securelywp');
+    } else {
+        $level = __('Basic', 'securelywp');
+        $next_step = __('Enable more protection controls to improve your security level.', 'securelywp');
+    }
+
+    return [
+        'level' => $level,
+        'score' => $score,
+        'max_score' => $total,
+        'enabled' => $enabled,
+        'total' => $total,
+        'next_step' => $next_step,
+    ];
+}
+
+/**
  * Record a lockout event for the current IP.
  *
  * @param string $ip Client IP.

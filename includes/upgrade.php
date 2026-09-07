@@ -34,6 +34,10 @@ function securelywp_maybe_upgrade() {
         securelywp_upgrade_to_121();
     }
 
+    if (version_compare($installed, '1.3.0', '<')) {
+        securelywp_upgrade_to_130();
+    }
+
     update_option('securelywp_db_version', SECURELYWP_VERSION, false);
 }
 
@@ -246,4 +250,18 @@ function securelywp_upgrade_to_121() {
     } else {
         update_option('securelywp_hardening_options', wp_parse_args((array) get_option('securelywp_hardening_options', []), $default_hardening_options));
     }
+}
+
+/**
+ * Upgrade tasks for version 1.3.0.
+ *
+ * @return void
+ */
+function securelywp_upgrade_to_130() {
+    $headers = get_option('securelywp_headers_options', []);
+    $headers = wp_parse_args((array) $headers, [
+        'coop_active' => true,
+        'coop' => 'same-origin',
+    ]);
+    update_option('securelywp_headers_options', $headers);
 }
